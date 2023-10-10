@@ -46,7 +46,7 @@ void on_message(const char* topic, byte* payload, unsigned int msg_length) {
     if ( command == "LED") {config.LED = bool(cmd_value.toInt()); mqtt_publish(mqtt_pathtele, "LED", String(config.LED));}
     if ( command == "TELNET") { config.TELNET = bool(cmd_value.toInt()); storage_write(); telnet_setup(); }
     if ( command == "OTA") { config.OTA = bool(cmd_value.toInt()); storage_write(); ESPRestart(); }
-    if ( command == "NTP") if (bool(cmd_value.toInt()) == true) { getNTPtime(); mqtt_publish(mqtt_pathtele, "DateTime", String(curDateTime()));}
+    if ( command == "NTP") if (bool(cmd_value.toInt()) == true) { getNTPtime(); mqtt_publish(mqtt_pathtele, "DateTime", String(DateandTime()));}
 #ifndef ESP8285
     if ( command == "WEB") { config.WEB = bool(cmd_value.toInt()); storage_write(); web_setup(); }
 #endif
@@ -122,7 +122,7 @@ void on_message(const char* topic, byte* payload, unsigned int msg_length) {
 //        storage_print();
 //        if (BattPowered) { Serial.printf("Power: BATT  -  Level: %.0f\t", getBattLevel()); }
 //        else { Serial.printf("Power: MAINS\t"); }
-//        Serial.print("Current Date/Time: " + curDateTime());
+//        Serial.print("Current Date/Time: " + DateandTime());
 //        Serial.printf("\t NTP Sync: %d\n", NTP_Sync);
 //    }
 }

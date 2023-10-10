@@ -96,7 +96,7 @@ String urldecode(String input) // (based on https://code.google.com/p/avr-netino
 
 void web_setup() {
 
-  if (config.WEB) {
+  if (config.WEB && WIFI_state == WL_CONNECTED) {
         // Start HTTP Server for configuration
     MyWebServer.on ( "/", []() { MyWebServer.send ( 200, "text/html", PAGE_AdminMainPage);   }  );
 
@@ -141,8 +141,11 @@ void web_setup() {
     telnet_println("My Web server has started for " + String(Extend_time/60) + " minutes");
   }
   else {
-    MyWebServer.close();
-    Extend_time = 0;
+    if (WIFI_state == WL_CONNECTED) {
+        MyWebServer.close();
+        Extend_time = 0;
+    }
+    else telnet_println( "WEB ERROR! ==> NO Internet connection!");
   }
 }
 

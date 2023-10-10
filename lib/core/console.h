@@ -70,6 +70,5 @@ void telnet_setup() {
 }
 
 void console_prompt() {
-	String prmptln;
 	telnet_print( String(config.DeviceName) + String("> "), true);
 }

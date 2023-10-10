@@ -2,23 +2,37 @@
  * * Main File to trigger all C code using "arduino" style.
  * * It contains all necessary function calls on setup and loop functions
  * * HOW TO USE THIS TEMPLATE:
- * * -- Adjust the parameter below to your project.
+ * * -- Adjust the parameter below to your project in "lib/project/def_conf.h"
  * *    Parameters on struct "config" will be store on memory.
- * *    Don't forget to customize the Mem read and write actions on "lib/project/custostore.h"
  * * -- Use the "// **** Normal code ..." zones to add you own definition, functions, setup and loop code
- * * -- You can also add you own MQTT actions on "lib/project/customqtt.h"
+ * * -- You can also add you own MQTT/Telnet actions on "lib/project/custoactions.h"
  * * -- Suggest to use "lib/project/" to add your own h files
  */
 
-// Libraries to INCLUDE
-#include <storage.h>
 
+
+// Libraries to INCLUDE
+#include <Arduino.h>
+
+#define custo_strDateTime true
+struct strDateTime {
+    byte hour;
+    byte minute;
+    byte second;
+    int year;
+    byte month;
+    byte day;
+    byte wday;
+    bool alarm;
+    byte sound;
+};
+
+#include <storage.h>
 #ifdef ESP32
     #include <esp32hw.h>
 #else 
     #include <hw8266.h>
 #endif
-
 #include <mywifi.h>
 
 //#ifdef ESP8266
@@ -62,7 +76,7 @@ void setup() {
       project_hw();
 
   // Start WiFi service (Station or/and as Access Point)
-      wifi_setup();
+      //wifi_setup();           // running on project_hw();
 
   // Check for HTTP Upgrade
 //#ifdef ESP8266
@@ -78,11 +92,11 @@ void setup() {
       mqtt_setup();
 
   // Start OTA service
-      if (config.OTA) ota_setup();
+      ota_setup();
 
 #ifndef ESP8285
   // Start ESP Web Service
-      if (config.WEB) web_setup();
+      web_setup();
 #endif
 
   // **** Project SETUP Sketch code here...
@@ -102,7 +116,7 @@ void setup() {
 
 void loop() {
   // allow background process to run.
-      yield();
+      //yield();
 
   // Hardware handling, namely the ESP_LED
       hw_loop();
@@ -134,7 +148,7 @@ void loop() {
       project_loop();
 
   // Global loops handling
-      deepsleep_loop();
+      //deepsleep_loop();
       if (BattPowered && ((millis() - 3500) % 60000 < 5)) Batt_OK_check();    // If Batt LOW, it will DeepSleep forever!
 
 }  // end of loop()

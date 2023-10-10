@@ -100,7 +100,7 @@ void send_NTP_configuration_values_html()
 {
 
   getNTPtime();
-  curDateTime();
+  DateandTime();
   String values ="";
   values += "ntpserver|" + (String) config.NTPServerName + "|input\n";
   values += "update|" + (String) config.Update_Time_Via_NTP_Every + "|input\n";

@@ -56,7 +56,7 @@ function load(e,t,n){if("js"==t){var a=document.createElement("script");a.src=e,
 
 void send_information_values_html ()
 {
-  curDateTime();
+  DateandTime();
   String values ="";
 
   values += "x_ssid|" + (String)WiFi.SSID() + "|div\n";

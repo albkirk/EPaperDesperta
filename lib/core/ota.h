@@ -2,7 +2,7 @@
 
 
   void ota_setup() {
-    if(config.OTA) {
+    if(config.OTA && WIFI_state == WL_CONNECTED) {
         // ***********  OTA SETUP
         // Default Port is 8266 for ESP8266 and 3232 for ESP-32
         ArduinoOTA.setPort(8266);
@@ -49,12 +49,12 @@
         ArduinoOTA.begin();
       telnet_println("Ready for OTA");
     }
-    else yield();
+    else telnet_println( "OTA ERROR! ==> NO Internet connection!");
   }
 
   // OTA commands to run on loop function.
   void ota_loop() {
       blink_LED(1);
-      ArduinoOTA.handle();
+      if(WIFI_state == WL_CONNECTED) ArduinoOTA.handle();
       yield();
   }

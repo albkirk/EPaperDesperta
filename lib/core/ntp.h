@@ -14,7 +14,7 @@ unsigned long NTP_LastTime = 0;           // Last NTP connection attempt time st
 int NTP_errors = 0;                       // NTP errors Counter
 volatile unsigned long cur_utctime;       // Auxiliary var
 volatile unsigned long cur_unixtime;      // Auxiliary var
-static unsigned long ntpNOW = 0;          // Auxiliary var for millis
+static unsigned long MaxMillis = 0;       // Auxiliary var for detect millis looped
 
 
 String leadzero(byte DTValue) {
@@ -22,8 +22,7 @@ String leadzero(byte DTValue) {
   else return String(DTValue);
 }
 
-strDateTime ConvertTimeStamp(unsigned long _tempTimeStamp)
-{
+strDateTime ConvertTimeStamp(unsigned long _tempTimeStamp) {
   strDateTime _tempDateTime;
   uint8_t year;
   uint8_t month, monthLength;
@@ -90,8 +89,7 @@ strDateTime ConvertTimeStamp(unsigned long _tempTimeStamp)
 //
 // Summertime calculates the daylight saving time for middle Europe. Input: Unixtime in UTC
 //
-boolean summerTime(unsigned long _timeStamp)
-{
+boolean summerTime(unsigned long _timeStamp) {
   strDateTime _tempDateTime = ConvertTimeStamp(_timeStamp);
   // printTime("Innerhalb ", _tempDateTime);
 
@@ -107,8 +105,7 @@ boolean summerTime(unsigned long _timeStamp)
     return false;
 }
 
-unsigned long adjustTimeZone(unsigned long _timeStamp, int _timeZone, bool _isDayLightSavingSaving)
-{
+unsigned long adjustTimeZone(unsigned long _timeStamp, int _timeZone, bool _isDayLightSavingSaving) {
   // strDateTime _tempDateTime;
   _timeStamp += _timeZone * 10 * 360;        // adjust timezone
   // printTime("Innerhalb adjustTimeZone ", ConvertTimeStamp(_timeStamp));
@@ -117,8 +114,7 @@ unsigned long adjustTimeZone(unsigned long _timeStamp, int _timeZone, bool _isDa
   return _timeStamp;
 }
 
-void getNTPtime(unsigned long timeout_sync = 1000UL)
-{
+void getNTPtime(unsigned long timeout_sync = 1000UL) {
   bool loop_timeOut = true;
   NTP_Sync = false;
   unsigned long NTPTime = 0; // Resetting value to 0
@@ -133,7 +129,7 @@ void getNTPtime(unsigned long timeout_sync = 1000UL)
     while (!NTP_Sync && !loop_timeOut)
     {
       NTPTime = time(nullptr);
-      RefMillis = millis();                  // Exact moment that NTP data was retrived
+      RefMillis = millis();                             // Exact moment that NTP data was retrived
       if (millis() - start_sync > timeout_sync)
         loop_timeOut = true;
       if (NTPTime > 31536000UL)
@@ -143,7 +139,7 @@ void getNTPtime(unsigned long timeout_sync = 1000UL)
     if (NTP_Sync)
     {
       UTCTimeStamp = NTPTime;
-      ntpNOW = millis();                     // To make sure that it 1st value is valid
+      if (MaxMillis < millis()) MaxMillis = millis();     // To make sure that it 1st value is valid
     }
   }
   if (ESPWakeUpReason() == "Deep-Sleep Wake" && loop_timeOut)
@@ -165,55 +161,48 @@ void getNTPtime(unsigned long timeout_sync = 1000UL)
   }
 }
 
-unsigned long curUTCTime()
-{
-  if (ntpNOW < RefMillis)
+unsigned long curUTCTime() {
+  if (millis() < MaxMillis)
   { // If true, it would mean the millis() counter had looped.
     UTCTimeStamp = UTCTimeStamp + 4294967295UL;
     NTP_Sync = false;
   }
-  ntpNOW = millis();
-  cur_utctime = UTCTimeStamp + ntpNOW / 1000;
+  MaxMillis = millis();
+  cur_utctime = UTCTimeStamp + millis() / 1000;
   // telnet_println("Current UTC time: " + String(cur_utctime));
   return cur_utctime;
 }
 
-unsigned long curUnixTime()
-{
-  if (ntpNOW < RefMillis)
+unsigned long curUnixTime() {
+  if (millis() < MaxMillis)
   { // If true, it would mean the millis() counter had looped.
     UTCTimeStamp = UTCTimeStamp + 4294967295UL;
     UnixTimeStamp = adjustTimeZone(UTCTimeStamp, config.TimeZone, config.isDayLightSaving);
-    RefMillis = 0;
     NTP_Sync = false;
   }
-  ntpNOW = millis();
-  cur_unixtime = UnixTimeStamp + ntpNOW / 1000;
+  MaxMillis = millis();
+  cur_unixtime = UnixTimeStamp + millis() / 1000;
   // telnet_println("Current UNIX time: " + String(cur_unixtime));
   return cur_unixtime;
 }
 
-String curDateTime()
-{
+String DateandTime(unsigned long unixtime = curUnixTime()) {
   String cdt_var = "";
-  cur_unixtime = curUnixTime();
-  DateTime = ConvertTimeStamp(cur_unixtime);
+  DateTime = ConvertTimeStamp(unixtime);
   cdt_var = String(WeekDays[DateTime.wday]) + ", " + String(DateTime.year) + "/" + leadzero(DateTime.month) + "/" + leadzero(DateTime.day);
   cdt_var += "  " + leadzero(DateTime.hour) + ":" + leadzero(DateTime.minute) + ":" + leadzero(DateTime.second);
   return cdt_var;
 }
 
-void ntp_setup()
-{
+void ntp_setup() {
   getNTPtime();
   if (NTP_Sync)
   {
-    telnet_println("Current Local Date / Time: " + curDateTime(), true);
+    telnet_println("Current Local Date / Time: " + DateandTime(), true);
   }
 }
 
-void ntp_loop()
-{
+void ntp_loop() {
   if (!NTP_Sync)
   {
     if (millis() - NTP_LastTime > (NTP_Retry * 1000))

@@ -37,21 +37,22 @@ portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;    // "critical section" Flag i
 void T_Left_pressed () {
     //portENTER_CRITICAL(&mux);
     unsigned long NOW = millis();
-    if (TL_STATUS == false) {
+    if (TL_STATUS == false && NOW - Last_TL > Touch_Bounce_Time) {
         while (millis() - NOW < Touch_Bounce_Time) {};      // loop to allow button status be stable before reading it
-            if ( touchRead(TouchPins[0]) <= TouchThreshold[0] ) {
-                TL_STATUS = true;
-                if (NOW - Last_TL < Touch_Interval) {
-                    TL_COUNT += 1;
-                    Serial.println("Touch Left pressed " + String(TL_COUNT) + " times!");
-                }
-                else {
-                    TL_COUNT = 1;
-                    Serial.println("Touch Left pressed");
-                }
-            };
+        if ( touchRead(TouchPins[0]) <= TouchThreshold[0] ) {
+            TL_STATUS = true;
+            Serial.print("NOW: " + String(NOW) + "\tLast_TL: "  + String(Last_TL) + "\t");
+            if (NOW - Last_TL < Touch_Interval) {
+                TL_COUNT += 1;
+                Serial.println("Touch Left pressed " + String(TL_COUNT) + " times!");
+            }
+            else {
+                TL_COUNT = 1;
+                Serial.println("Touch Left pressed");
+            }
+            Last_TL = NOW;
+        };
     }
-    Last_TL = NOW;
     //portEXIT_CRITICAL(&mux);
 }
 
@@ -62,7 +63,8 @@ void T_Right_pressed () {   // IRAM_ATTR
         while (millis() - NOW < Touch_Bounce_Time) {};      // loop to allow button status be stable before reading it
             if ( touchRead(TouchPins[1]) <= TouchThreshold[1] ) {
                 TR_STATUS = true;
-                if (NOW - Last_TR < Touch_Interval * 2) {
+                Serial.print("NOW: " + String(NOW) + "\tLast_TR: "  + String(Last_TR) + "\t");
+                if (NOW - Last_TR < Touch_Interval) {
                     TR_COUNT += 1;
                     Serial.println("Touch Right pressed " + String(TR_COUNT) + " times!");
                 }
@@ -71,8 +73,8 @@ void T_Right_pressed () {   // IRAM_ATTR
                     Serial.println("Touch Right pressed");
                 }
             };
-    }
     Last_TR = NOW;
+    }
     //portEXIT_CRITICAL(&mux);
 }
 
@@ -95,10 +97,12 @@ void touch_setup() {
 
 
 void touch_loop() {
-    if (TL_STATUS == true && (millis() - Last_TL > Touch_Bounce_Time)) {
+    unsigned long NOW = millis();
+    if (TL_STATUS == true && (NOW - Last_TL> 2 * Touch_Bounce_Time)) {
         if ( touchRead(TouchPins[0]) > TouchThreshold[0]) {
             TL_STATUS = false;
             Serial.println("Touch Left released");
         }
     }
+    //if (TL_STATUS == false && (NOW - Last_TL > Touch_Interval + Touch_Bounce_Time)) TL_COUNT = 0;
 }

@@ -146,7 +146,7 @@ void send_general_html()
 
 void send_general_configuration_values_html()
 {
-    curDateTime();
+    DateandTime();
     String values ="";
     values += "webusername|" +  String(config.WEB_User) +  "|input\n";
     //values += "webpassword|" +  String(config.WEB_Password) +  "|input\n";      // KEEP IT COMMENTED TO NOT SHOW THE WiFi KEY!!!
